@@ -2191,7 +2191,7 @@
     "enabled" : true,
     "clientAuthenticatorType" : "client-secret",
     "secret" : "91fff12e-9b97-4028-8705-ffd8126fba3f",
-    "redirectUris" : [ "https://localhost:18443/gateway/sandbox/*", "http://localhost:3000/*" ],
+    "redirectUris" : [ "https://localhost:18443/gateway/sandbox/*", "http://localhost:18443/gateway/sandbox/*", "http://localhost:3000/*" ],
     "webOrigins" : [ "*", "+" ],
     "notBefore" : 0,
     "bearerOnly" : false,
