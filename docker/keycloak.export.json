@@ -2724,7 +2724,7 @@
     "enabled" : true,
     "clientAuthenticatorType" : "client-secret",
     "secret" : "85a4fead-f735-4a38-8d16-61dc8689df6b",
-    "redirectUris" : [ "https://127.0.0.1/gateway/sandabox/*", "https://localhost/gateway/sandbox/*" ],
+    "redirectUris" : [ "http://127.0.0.1:18443/gateway/sandabox/*", "http://localhost:18443/grafana/*", "http://localhost:3000/*" ],
     "webOrigins" : [ "*", "+" ],
     "notBefore" : 0,
     "bearerOnly" : false,
