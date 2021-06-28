@@ -1,0 +1,50 @@
+
+FROM jboss/keycloak
+
+WORKDIR ${JBOSS_HOME}
+COPY keycloak.export.json  /tmp
+COPY  build-local.sh .
+
+ENV DB_VENDOR=h2
+
+#RUN chmod 755 ./build-local.sh && \
+RUN ./build-local.sh
+
+
+# Include global arg in this stage of the build
+ARG FUNCTION_DIR="/function"
+ENV FUNCTION_DIR="/function"
+
+# Set working directory to function root directory
+
+# Copy in the built dependencies
+
+USER root
+WORKDIR /tmp
+RUN microdnf install yum && \
+    curl -sL https://rpm.nodesource.com/setup_14.x | bash - && \
+    yum install -y nodejs && \
+    microdnf remove yum
+
+#ENV PV_LOCAL_COMMAND=/opt/jboss/tools/docker-entrypoint.sh
+ENV PV_LOCAL_COMMAND=/opt/jboss/tools/pontus-docker-entrypoint.sh
+ENV PV_LOCAL_ARGS='["-b", "127.0.0.1"]'
+ENV PV_LOCAL_URL_PREFIX=http://127.0.0.1:8888
+ENV PV_NUM_RETRIES=10
+ENV PV_READY_PATTERN="Admin console listening on http://127.0.0.1:9990"
+ENV BIND_OPTS=-Djboss.http.port=8888
+ENV KEYCLOAK_FRONTEND_URL=https://test1.formiti-demo.pontusvision.com/auth
+USER 1000
+
+RUN (/opt/jboss/tools/docker-entrypoint.sh || true)& LAST_PID=$! && sleep 30 && kill -9 $LAST_PID || true && \
+    sed -i '${DOLLAR}a\\n# Append to JAVA_OPTS. Necessary to prevent some values being omitted if JAVA_OPTS is defined directly\nJAVA_OPTS=\"\${DOLLAR}JAVA_OPTS \${DOLLAR}JAVA_OPTS_APPEND\"' /opt/jboss/keycloak/bin/standalone.conf && \
+    sed -i 's/^sed -i/#sed -i/g' /opt/jboss/tools/docker-entrypoint.sh && \
+    cd /opt/jboss/keycloak && tar czf standalone.tar.gz  standalone
+
+COPY --chown=1000:1000 pontus-docker-entrypoint.sh  /opt/jboss/tools/pontus-docker-entrypoint.sh
+RUN chmod 755 /opt/jboss/tools/pontus-docker-entrypoint.sh 
+COPY --chown=1000: --from=pontusvisiongdpr/pontus-lambda-wrapper:${TAG}  /function /function
+
+WORKDIR /function
+ENTRYPOINT ["/usr/bin/npx", "aws-lambda-ric"]
+CMD ["dist/index.handler"]
