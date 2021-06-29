@@ -1,7 +1,7 @@
 
 FROM jboss/keycloak
 
-WORKDIR 
+WORKDIR /opt/jboss
 COPY keycloak.export.json  /tmp
 COPY  build-local.sh .
 
