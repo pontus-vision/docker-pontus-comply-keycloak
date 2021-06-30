@@ -7,6 +7,11 @@ DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 export DOLLAR='$'
 cat $DIR/keycloak-lambda/Dockerfile.template | envsubst > $DIR/keycloak-lambda/Dockerfile
 cd $DIR/keycloak-lambda
+export KEYCLOAK_USER=${KEYCLOAK_USER:-admin}
+export KEYCLOAK_PASSWORD=${KEYCLOAK_PASSWORD:-adminpa55word2}
+
+echo "$KEYCLOAK_PASSWORD" > KEYCLOAK_PASSWORD_FILE
+echo "$KEYCLOAK_USER" > KEYCLOAK_USER_FILE
 
 if [[ -z $FORMITI_DEV_ACCOUNT ]]; then
   docker build --rm . -t pontusvisiongdpr/pontus-comply-keycloak-lambda:${TAG}
@@ -24,5 +29,6 @@ else
   docker push ${FORMITI_DEV_ACCOUNT}.dkr.ecr.eu-west-2.amazonaws.com/pontus-comply-keycloak-lambda:${TAG}-${TIMESTAMP}
 
 fi
+rm KEYCLOAK_PASSWORD_FILE KEYCLOAK_USER_FILE
 
 
