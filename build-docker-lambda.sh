@@ -25,8 +25,9 @@ else
 
   docker build --rm . -t pontus-comply-keycloak-lambda:${TAG}
   TIMESTAMP=$(date +%y%m%d_%H%M%S)
-  docker tag pontus-comply-keycloak-lambda:${TAG} ${FORMITI_DEV_ACCOUNT}.dkr.ecr.eu-west-2.amazonaws.com/pontus-comply-keycloak-lambda:${TAG}-${TIMESTAMP}  
-  docker push ${FORMITI_DEV_ACCOUNT}.dkr.ecr.eu-west-2.amazonaws.com/pontus-comply-keycloak-lambda:${TAG}-${TIMESTAMP}
+  #docker tag pontus-comply-keycloak-lambda:${TAG} ${FORMITI_DEV_ACCOUNT}.dkr.ecr.eu-west-2.amazonaws.com/pontus-comply-keycloak-lambda:${TAG}-${TIMESTAMP}  
+  docker tag pontus-comply-keycloak-lambda:${TAG} ${FORMITI_DEV_ACCOUNT}.dkr.ecr.eu-west-2.amazonaws.com/pontus-comply-keycloak-lambda:${TAG}
+  docker push ${FORMITI_DEV_ACCOUNT}.dkr.ecr.eu-west-2.amazonaws.com/pontus-comply-keycloak-lambda:${TAG}
 
 fi
 rm KEYCLOAK_PASSWORD_FILE KEYCLOAK_USER_FILE

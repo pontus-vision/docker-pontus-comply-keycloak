@@ -36,7 +36,8 @@ FROM registry.access.redhat.com/ubi8-minimal
 USER root
 #ENV PV_LOCAL_COMMAND=/opt/jboss/tools/docker-entrypoint.sh
 ENV PV_LOCAL_COMMAND=/opt/pontus-docker-entrypoint.sh
-ENV PV_LOCAL_ARGS='["-b", "127.0.0.1"]'
+#ENV PV_LOCAL_ARGS='["-b", "127.0.0.1"]'
+ENV PV_LOCAL_ARGS='["-b", "0.0.0.0"]'
 ENV PV_LOCAL_URL_PREFIX=http://127.0.0.1:8888
 ENV PV_NUM_RETRIES=10
 ENV PV_READY_PATTERN="Admin console listening on http://127.0.0.1:9990"

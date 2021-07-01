@@ -8,7 +8,7 @@ if [[ ! -d ~/.aws-lambda-rie ]]; then
 
 fi
 
-DOCKER_ID=$(docker run -d -v ~/.aws-lambda-rie:/aws-lambda -p 9000:8080 \
+DOCKER_ID=$(docker run -p 8888:8888 -d -v ~/.aws-lambda-rie:/aws-lambda -p 9000:8080 \
   --entrypoint /aws-lambda/aws-lambda-rie pontus-comply-keycloak-lambda:1.13.2  /usr/bin/npx aws-lambda-ric dist/index.handler)
 
 echo docker logs -f ${DOCKER_ID}
