@@ -1,38 +1,9 @@
-
-FROM quay.io/keycloak/keycloak:14.0.0 as base
-
-WORKDIR /opt/jboss
-#COPY keycloak.export.json  /tmp
-#COPY  build-local.sh .
+FROM registry.access.redhat.com/ubi8-minimal
 
 ENV DB_VENDOR=h2
-
-#RUN chmod 755 ./build-local.sh && \
-#RUN ./build-local.sh
-
-
-
-# Set working directory to function root directory
-
-# Copy in the built dependencies
-
-USER root
-
-RUN chown -R 1000 /opt/ 
-USER 1000
-#    /opt/jboss/build-local.sh && \
-#    sed -i '${DOLLAR}a\\n# Append to JAVA_OPTS. Necessary to prevent some values being omitted if JAVA_OPTS is defined directly\nJAVA_OPTS=\"\${DOLLAR}JAVA_OPTS \${DOLLAR}JAVA_OPTS_APPEND\"' /opt/jboss/keycloak/bin/standalone.conf && \
-#    sed -i 's|/opt/jboss/configured|/mnt/keycloak/configured|g; s/^sed -i/#sed -i/g' /opt/jboss/tools/docker-entrypoint.sh && \
-
-ENV BIND_OPTS="-Djboss.http.port=8888"
+ENV JAVA_OPTS="-Djboss.http.port=8888"
 #RUN java -jar /opt/jboss/keycloak/jboss-modules.jar -mp /opt/jboss/keycloak/modules/  org.keycloak.keycloak-wildfly-adduser -u admin -p adminpa55word && 
-RUN (env KEYCLOAK_PASSWORD=${KEYCLOAK_PASSWORD} KEYCLOAK_USER=${KEYCLOAK_USER} /opt/jboss/tools/docker-entrypoint.sh || true)& LAST_PID=${DOLLAR}! && \
-    sleep 40 && \
-    (kill  ${DOLLAR}LAST_PID  || true) && \
-    cd /opt/ && \
-    tar czf jboss.tar.gz  jboss 
 
-FROM registry.access.redhat.com/ubi8-minimal
 USER root
 #ENV PV_LOCAL_COMMAND=/opt/jboss/tools/docker-entrypoint.sh
 ENV PV_LOCAL_COMMAND=/opt/pontus-docker-entrypoint.sh
@@ -44,6 +15,8 @@ ENV PV_READY_PATTERN="Admin console listening on http://127.0.0.1:9990"
 #ENV BIND_OPTS="-Djboss.http.port=8888 -Djboss.server.base.dir=/mnt/keycloak/standalone"
 ENV BIND_OPTS="-Djboss.http.port=8888"
 ENV KEYCLOAK_FRONTEND_URL=https://test1.formiti-demo.pontusvision.com/auth
+ARG FUNCTION_DIR="/function"
+ENV FUNCTION_DIR="/function"
 
 RUN microdnf update -y && \
     microdnf install -y glibc-langpack-en gzip hostname java-11-openjdk-headless openssl tar which  yum  && \
@@ -60,21 +33,18 @@ RUN microdnf update -y && \
     echo "jboss:x:0:root" >> /etc/group && \
     echo "jboss:x:1000:0:JBoss user:/opt/jboss:/sbin/nologin" >> /etc/passwd && \
     chown -R jboss:root /opt/ && \
-    chmod -R g+rwX /opt/
+    chmod -R g+rwX /opt/ && \
+    curl -L https://github.com/keycloak/keycloak/releases/download/14.0.0/keycloak-14.0.0.tar.gz --output /opt/keycloak.tar.gz 
 
-COPY --chown=1000: --from=base /opt/jboss.tar.gz /opt/
+COPY --chown=1000:0 --from=pontusvisiongdpr/pontus-lambda-wrapper:${TAG}  /function /function
 
-
-COPY --chown=1000: pontus-docker-entrypoint.sh  /opt/pontus-docker-entrypoint.sh
+COPY --chown=1000:0 pontus-docker-entrypoint.sh  /opt/pontus-docker-entrypoint.sh
+COPY --chown=1000:0 standalone.xml  /opt/
 RUN chmod 755 /opt/pontus-docker-entrypoint.sh  && \
-    rm -rf /opt/jboss || true &&\
     mkdir /mnt/keycloak && \
-    ln -s /mnt/keycloak/jboss /opt/jboss
+    mkdir /opt/keycloak-14.0.0 && \
+    ln -s /mnt/keycloak/keycloak-14.0.0 /opt/keycloak-14.0.0/
 
-# Include global arg in this stage of the build
-ARG FUNCTION_DIR="/function"
-ENV FUNCTION_DIR="/function"
-COPY --chown=1000: --from=pontusvisiongdpr/pontus-lambda-wrapper:${TAG}  /function /function
 
 WORKDIR /function
 ENTRYPOINT ["/usr/bin/npx", "aws-lambda-ric"]
