@@ -1,7 +1,7 @@
-FROM registry.access.redhat.com/ubi8-minimal
+FROM registry.access.redhat.com/ubi8-minimal AS base
 
 ENV DB_VENDOR=h2
-ENV JAVA_OPTS="-Djboss.http.port=8888"
+#ENV JAVA_OPTS="-Djboss.http.port=8888"
 #RUN java -jar /opt/jboss/keycloak/jboss-modules.jar -mp /opt/jboss/keycloak/modules/  org.keycloak.keycloak-wildfly-adduser -u admin -p adminpa55word && 
 
 USER root
@@ -33,18 +33,34 @@ RUN microdnf update -y && \
     echo "jboss:x:0:root" >> /etc/group && \
     echo "jboss:x:1000:0:JBoss user:/opt/jboss:/sbin/nologin" >> /etc/passwd && \
     chown -R jboss:root /opt/ && \
-    chmod -R g+rwX /opt/ && \
-    curl -L https://github.com/keycloak/keycloak/releases/download/14.0.0/keycloak-14.0.0.tar.gz --output /opt/keycloak.tar.gz 
+    chmod -R g+rwX /opt/ 
+
+
+COPY --chown=1000:0 keycloak.export.json   /opt/keycloak.export.json 
+COPY --chown=1000:0 standalone.xml  /opt/
+
+    #/mnt/keycloak/keycloak-14.0.0/bin/standalone.sh -Dkeycloak.migration.action=import -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file=/opt/keycloak.export.json -Dkeycloak.migration.strategy=OVERWRITE_EXISTING -Dkeycloak.profile.feature.upload_scripts=enable & KCPID=${DOLLAR}! && sleep 40 && kill -15 ${DOLLAR}KCPID  && \
+
+RUN mkdir -p /mnt/keycloak && \
+    curl -L https://github.com/keycloak/keycloak/releases/download/14.0.0/keycloak-14.0.0.tar.gz --output /mnt/keycloak/keycloak.tar.gz  && \
+    cd /mnt/keycloak &&\
+    tar xzf keycloak.tar.gz &&\
+    cp /opt/standalone.xml /mnt/keycloak/keycloak-14.0.0/standalone/configuration/  && \
+    cd /mnt/keycloak &&\
+    tar czf keycloak.tar.gz keycloak-14.0.0 && \
+    mv keycloak.tar.gz /opt && \
+    rm -rf /mnt/keycloak/
+   
 
 COPY --chown=1000:0 --from=pontusvisiongdpr/pontus-lambda-wrapper:${TAG}  /function /function
 
 COPY --chown=1000:0 pontus-docker-entrypoint.sh  /opt/pontus-docker-entrypoint.sh
-COPY --chown=1000:0 standalone.xml  /opt/
 RUN chmod 755 /opt/pontus-docker-entrypoint.sh  && \
     mkdir /mnt/keycloak && \
     mkdir /opt/keycloak-14.0.0 && \
     ln -s /mnt/keycloak/keycloak-14.0.0 /opt/keycloak-14.0.0/
 
+USER 1000
 
 WORKDIR /function
 ENTRYPOINT ["/usr/bin/npx", "aws-lambda-ric"]
