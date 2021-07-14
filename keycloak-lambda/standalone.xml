@@ -505,7 +505,7 @@
                 <provider name="default" enabled="true">
                     <properties>
                         <property name="frontendUrl" value="${keycloak.frontendUrl:}"/>
-                        <property name="forceBackendUrlToFrontendUrl" value="false"/>
+                        <property name="forceBackendUrlToFrontendUrl" value="true"/>
                     </properties>
                 </provider>
             </spi>
